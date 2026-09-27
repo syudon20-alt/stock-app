@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import type { Item, ItemInput } from "@/types/item";
 
 type Props = {
@@ -14,7 +14,6 @@ type Props = {
 
 export default function ItemForm({ mode, item, initialBarcode, initialName }: Props) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [form, setForm] = useState<ItemInput>({
     barcode: item?.barcode ?? initialBarcode ?? null,

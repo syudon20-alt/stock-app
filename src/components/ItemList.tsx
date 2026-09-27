@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { stockStatus, type Item } from "@/types/item";
 
 type Filter = "all" | "low" | "out";
@@ -17,7 +17,6 @@ export default function ItemList({ initialItems }: { initialItems: Item[] }) {
   const [items, setItems] = useState(initialItems);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const supabase = useMemo(() => createClient(), []);
 
   const updateQuantity = async (item: Item, nextQuantity: number) => {
     const clamped = Math.max(0, nextQuantity);

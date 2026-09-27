@@ -1,9 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { supabase } from "@/lib/supabaseClient";
 import ItemList from "@/components/ItemList";
 import type { Item } from "@/types/item";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("items")
     .select("*")

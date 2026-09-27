@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Html5Qrcode } from "html5-qrcode";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import type { Item } from "@/types/item";
 
 const SCANNER_ELEMENT_ID = "barcode-scanner";
 
 export default function BarcodeScanner() {
   const router = useRouter();
-  const supabase = createClient();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isProcessingRef = useRef(false);
 
@@ -50,7 +49,7 @@ export default function BarcodeScanner() {
         router.push(`/items/new?barcode=${encodeURIComponent(decodedText)}`);
       }
     },
-    [router, supabase]
+    [router]
   );
 
   useEffect(() => {
