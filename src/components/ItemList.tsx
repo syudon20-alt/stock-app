@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { stockStatus, type Item } from "@/types/item";
 
 type Filter = "all" | "low" | "out";
+type GroupBy = "category" | "location";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "すべて" },
@@ -13,10 +14,16 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "out", label: "在庫切れ" },
 ];
 
+const GROUP_OPTIONS: { key: GroupBy; label: string }[] = [
+  { key: "category", label: "カテゴリ別" },
+  { key: "location", label: "場所別" },
+];
+
 export default function ItemList({ initialItems }: { initialItems: Item[] }) {
   const [items, setItems] = useState(initialItems);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [groupBy, setGroupBy] = useState<GroupBy>("category");
 
   const updateQuantity = async (item: Item, nextQuantity: number) => {
     const clamped = Math.max(0, nextQuantity);
@@ -38,12 +45,13 @@ export default function ItemList({ initialItems }: { initialItems: Item[] }) {
   const grouped = useMemo(() => {
     const map = new Map<string, Item[]>();
     for (const item of filtered) {
-      const key = item.category?.trim() || "未分類";
+      const raw = groupBy === "category" ? item.category : item.location;
+      const key = raw?.trim() || "未設定";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "ja"));
-  }, [filtered]);
+  }, [filtered, groupBy]);
 
   return (
     <div className="p-4">
@@ -55,7 +63,7 @@ export default function ItemList({ initialItems }: { initialItems: Item[] }) {
         className="mb-3 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
       />
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-3 flex gap-2">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -67,6 +75,22 @@ export default function ItemList({ initialItems }: { initialItems: Item[] }) {
             }`}
           >
             {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm">
+        {GROUP_OPTIONS.map((g) => (
+          <button
+            key={g.key}
+            onClick={() => setGroupBy(g.key)}
+            className={`flex-1 rounded-md py-1.5 font-medium ${
+              groupBy === g.key
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500"
+            }`}
+          >
+            {g.label}
           </button>
         ))}
       </div>
@@ -99,7 +123,11 @@ export default function ItemList({ initialItems }: { initialItems: Item[] }) {
                         {item.name}
                       </p>
                       <p className="mt-0.5 flex items-center gap-1.5 text-xs text-neutral-400">
-                        {item.location && <span>{item.location}</span>}
+                        {(() => {
+                          const sub =
+                            groupBy === "category" ? item.location : item.category;
+                          return sub && <span>{sub}</span>;
+                        })()}
                         {status === "out" && (
                           <span className="rounded bg-red-100 px-1.5 py-0.5 font-medium text-red-600">
                             在庫切れ

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import type { Item, ItemInput } from "@/types/item";
+import type { Location } from "@/types/location";
 
 type Props = {
   mode: "create" | "edit";
@@ -27,6 +29,15 @@ export default function ItemForm({ mode, item, initialBarcode, initialName }: Pr
   });
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [locations, setLocations] = useState<Location[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("locations")
+      .select("*")
+      .order("name", { ascending: true })
+      .then(({ data }) => setLocations((data ?? []) as Location[]));
+  }, []);
 
   const set = <K extends keyof ItemInput>(key: K, value: ItemInput[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -126,14 +137,29 @@ export default function ItemForm({ mode, item, initialBarcode, initialName }: Pr
         />
       </Field>
 
-      <Field label="保管場所">
-        <input
-          type="text"
-          placeholder="キッチン棚・冷凍庫など"
+      <Field
+        label="保管場所"
+        action={
+          <Link href="/locations" className="text-xs text-emerald-600 hover:underline">
+            場所を管理
+          </Link>
+        }
+      >
+        <select
           value={form.location ?? ""}
-          onChange={(e) => set("location", e.target.value)}
+          onChange={(e) => set("location", e.target.value || null)}
           className={inputClass}
-        />
+        >
+          <option value="">未設定</option>
+          {form.location && !locations.some((l) => l.name === form.location) && (
+            <option value={form.location}>{form.location}</option>
+          )}
+          {locations.map((location) => (
+            <option key={location.id} value={location.name}>
+              {location.name}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <Field label="残りわずかの目安（この数以下で警告）">
@@ -197,12 +223,23 @@ export default function ItemForm({ mode, item, initialBarcode, initialName }: Pr
 const inputClass =
   "w-full rounded-lg border border-neutral-300 px-3 py-2 text-neutral-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  action,
+}: {
+  label: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-neutral-700">
-        {label}
-      </label>
+      <div className="mb-1 flex items-center justify-between">
+        <label className="block text-sm font-medium text-neutral-700">
+          {label}
+        </label>
+        {action}
+      </div>
       {children}
     </div>
   );
