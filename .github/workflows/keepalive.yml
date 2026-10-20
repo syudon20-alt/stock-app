@@ -16,3 +16,17 @@ jobs:
             "https://yqmhijiwzvmhukrkmhxp.supabase.co/rest/v1/items?select=id&limit=1" \
             -H "apikey: sb_publishable_yWjwnWmWRAmZoHuwonpI4g_p2tGOTRM" \
             -H "Authorization: Bearer sb_publishable_yWjwnWmWRAmZoHuwonpI4g_p2tGOTRM"
+
+      # GitHubはリポジトリに60日間コミットがないと定期実行を無効化する。
+      # 45日を超えたら、わざと失敗させて失敗通知メールで知らせる。
+      - uses: actions/checkout@v4
+
+      - name: Warn if scheduled runs are about to be disabled
+        run: |
+          last=$(git log -1 --format=%ct)
+          days=$(( ($(date +%s) - last) / 86400 ))
+          echo "Last commit was ${days} days ago"
+          if [ "$days" -ge 45 ]; then
+            echo "::error::最後のコミットから${days}日経過。60日で定期実行が無効化されます。何かコミットするとリセットされます。"
+            exit 1
+          fi
